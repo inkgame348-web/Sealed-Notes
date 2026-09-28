@@ -1,0 +1,53 @@
+name: Build Sealed Notes Release
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Unzip project
+        run: |
+          unzip -o SealedNotes.zip -d .
+          ls -la
+
+      - name: Decode keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | tr -d ' \n\r\t' | base64 -d > SealedNotes/sealednotes.keystore
+          ls -la SealedNotes/sealednotes.keystore
+
+      - name: Create keystore.properties
+        run: |
+          cat > SealedNotes/keystore.properties <<EOF
+          storeFile=sealednotes.keystore
+          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          keyPassword=${{ secrets.KEY_PASSWORD }}
+          EOF
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x SealedNotes/gradlew
+
+      - name: Build Release APK
+        working-directory: SealedNotes
+        run: ./gradlew assembleRelease --stacktrace
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: SealedNotes-release-apk
+          path: SealedNotes/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
