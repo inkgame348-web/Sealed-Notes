@@ -1,0 +1,124 @@
+name: Build Sealed Notes Release
+
+on:
+  push:
+    branches: [ main, master ]
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Release APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show repo
+        run: |
+          echo "=== Корень репозитория ==="
+          ls -la
+
+      - name: Extract zip
+        id: extract
+        run: |
+          ZIP=$(find . -maxdepth 2 -name "*.zip" | head -1)
+          if [ -z "$ZIP" ]; then
+            echo "::error::Не найден zip-архив в репозитории"
+            exit 1
+          fi
+          echo "Найден архив: $ZIP"
+          mkdir -p project
+          unzip -q "$ZIP" -d project
+          echo "=== Распаковано ==="
+          ls -la project/
+
+          # Ищем settings.gradle в распакованном
+          FOUND=$(find project -maxdepth 4 -name "settings.gradle" | head -1)
+          if [ -z "$FOUND" ]; then
+            echo "::error::Внутри архива нет settings.gradle"
+            find project -maxdepth 4 -type f | head -50
+            exit 1
+          fi
+          DIR=$(dirname "$FOUND")
+          echo "Проект в: $DIR"
+          echo "dir=$DIR" >> $GITHUB_OUTPUT
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: actions/setup-gradle@v3
+        with:
+          gradle-version: '8.1.1'
+
+      - name: Decode Keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::warning::Секрет KEYSTORE_BASE64 не задан — соберём без подписи"
+            exit 0
+          fi
+          mkdir -p "${{ steps.extract.outputs.dir }}/keystore"
+          printf '%s' "$KEYSTORE_BASE64" | base64 -d > "${{ steps.extract.outputs.dir }}/keystore/sealednotes.keystore"
+
+      - name: Create keystore.properties
+        env:
+          STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS_VALUE: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD_VALUE: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ -z "$STORE_PASSWORD" ]; then
+            echo "Секреты не заданы — пропускаем"
+            exit 0
+          fi
+          cat > "${{ steps.extract.outputs.dir }}/keystore.properties" <<EOF
+          storeFile=keystore/sealednotes.keystore
+          storePassword=${STORE_PASSWORD}
+          keyAlias=${KEY_ALIAS_VALUE}
+          keyPassword=${KEY_PASSWORD_VALUE}
+          EOF
+
+      - name: Build Release APK
+        working-directory: ${{ steps.extract.outputs.dir }}
+        run: gradle assembleRelease --no-daemon --stacktrace
+
+      - name: Get version
+        id: v
+        run: |
+          VERSION=$(grep 'versionName' "${{ steps.extract.outputs.dir }}/app/build.gradle" | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          if [ -z "$VERSION" ]; then VERSION="unknown"; fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Prepare output
+        run: |
+          mkdir -p output
+          cp "${{ steps.extract.outputs.dir }}/app/build/outputs/apk/release/app-release.apk" \
+             "output/SealedNotes-${{ steps.v.outputs.version }}.apk" || \
+          cp "${{ steps.extract.outputs.dir }}/app/build/outputs/apk/release/"*.apk \
+             "output/"
+          ls -la output/
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: SealedNotes-${{ steps.v.outputs.version }}
+          path: output/*.apk
+          retention-days: 30
+
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: output/*.apk
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
