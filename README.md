@@ -1,6 +1,6 @@
 # Sealed Notes
 
-Encrypted notes app for Android. All notes are stored encrypted; access is protected by a master password and biometrics. Built for non-rooted devices to protect data from other apps.
+Encrypted notes app for Android. Notes are stored encrypted; access is protected by a master password and biometrics. Built for non-rooted devices to protect data from other apps.
 
 ## What it protects you from
 
@@ -32,16 +32,23 @@ Encrypted notes app for Android. All notes are stored encrypted; access is prote
 - Application ID: `com.inkgame348.sealednotes`
 - Built with GitHub Actions
 
-## Requirements
-
-· Android 6.0 (API 23) or newer
-· Biometrics support on the device
-· System PIN fallback: API 30+
-
 ## Building from source
 
-```bash
-./gradlew assembleRelease
-```
+Requires JDK 17 and Android SDK 34. Run `./gradlew assembleDebug` for a debug APK, `./gradlew assembleRelease` for release; CI builds on push via GitHub Actions.
 
-Also builds via GitHub Actions
+## Requirements
+
+- Android 6.0 (API 23) or newer.
+- Biometrics support on the device.
+- System PIN fallback: API 30+.
+
+## Limitations
+
+- No protection against root access.
+- No protection against a compromised device.
+- No automatic cloud sync.
+- Security depends on master password strength and Android Keystore.
+
+## License
+
+MIT License. Provided "AS IS", without warranty of any kind. The author is not liable for any damages or losses arising from the use of this software.
