@@ -41,20 +41,20 @@ Encrypted notes app for Android. All notes are stored encrypted; access is prote
 
 Also builds via GitHub Actions.
 
-Requirements
+## Requirements
 
 · Android 6.0 (API 23) or newer.
 · Biometrics support on the device.
 · System PIN fallback: API 30+.
 
-Limitations
+## Limitations
 
 · Does not protect against root access.
 · Does not protect against a compromised device.
 · No automatic cloud sync.
 · Security depends on master password strength and Android Keystore.
 
-License
+## License
 
 MIT License.
 
