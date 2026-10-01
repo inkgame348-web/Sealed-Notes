@@ -1,4 +1,3 @@
-```markdown
 # Sealed Notes
 
 Encrypted notes app for Android. All notes are stored encrypted; access is protected by a master password and biometrics. Built for non-rooted devices to protect data from other apps.
