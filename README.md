@@ -32,6 +32,12 @@ Encrypted notes app for Android. All notes are stored encrypted; access is prote
 - Application ID: `com.inkgame348.sealednotes`
 - Built with GitHub Actions
 
+## Requirements
+
+· Android 6.0 (API 23) or newer
+· Biometrics support on the device
+· System PIN fallback: API 30+
+
 ## Building from source
 
 ```bash
@@ -39,23 +45,4 @@ Encrypted notes app for Android. All notes are stored encrypted; access is prote
 ./gradlew assembleRelease
 ```
 
-Also builds via GitHub Actions.
-
-## Requirements
-
-· Android 6.0 (API 23) or newer.
-· Biometrics support on the device.
-· System PIN fallback: API 30+.
-
-## Limitations
-
-· Does not protect against root access.
-· Does not protect against a compromised device.
-· No automatic cloud sync.
-· Security depends on master password strength and Android Keystore.
-
-## License
-
-MIT License.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED. THE AUTHOR IS NOT LIABLE FOR ANY DAMAGES OR LOSSES ARISING FROM THE USE OF THIS SOFTWARE.
+Also builds via GitHub Actions
