@@ -41,7 +41,6 @@ Encrypted notes app for Android. All notes are stored encrypted; access is prote
 ## Building from source
 
 ```bash
-./gradlew assembleDebug
 ./gradlew assembleRelease
 ```
 
